@@ -1,20 +1,37 @@
 import React from "react";
 import config from "../config.json";
 import styled from "styled-components";
-import { CSSReset } from "../src/components/CSSReset";
 import Menu from "../src/components/Menu";
 import { StyledTimeline } from "../src/components/Timeline";
+import { videoService } from "../src/services/videoServices";
 
 function HomePage() {
-  const estiloDaHomePage = {
-    // backgroundColor: "cyan" 
-  };
- 
+  const service = videoService();
   const [valorDoFiltro, setValorDoFiltro] = React.useState("");
+  const [playlists, setPlaylists] = React.useState({});
+
+  React.useEffect(() => {
+    console.log("useEffect");
+    service
+        .getAllVideos()
+        .then((dados) => {
+            console.log(dados.data);
+            // Forma imutavel
+            const novasPlaylists = {};
+            dados.data.forEach((video) => {
+                if (!novasPlaylists[video.playlist]) novasPlaylists[video.playlist] = [];
+                novasPlaylists[video.playlist] = [
+                    video,
+                    ...novasPlaylists[video.playlist],
+                ];
+            });
+
+            setPlaylists(novasPlaylists);
+        });
+}, []);
 
   return (
     <>
-      <CSSReset />
       <div style={{
                 display: "flex",
                 flexDirection: "column",
@@ -23,7 +40,7 @@ function HomePage() {
             }}>
       <Menu valorDoFiltro={valorDoFiltro} setValorDoFiltro={setValorDoFiltro} />
       <Header />
-      <Timeline searchValue={valorDoFiltro} playlists={config.playlists}>
+      <Timeline searchValue={valorDoFiltro} playlists={playlists}>
                     Conteúdo
                 </Timeline>
     </div>
@@ -35,6 +52,8 @@ export default HomePage;
 
 
 const StyledHeader = styled.div`
+background-color: ${({ theme }) => theme.backgroundLevel1};
+
   img {
     width: 80px;
     heigth: 80px;
@@ -73,7 +92,7 @@ function Header() {
 }
 
 function Timeline({ searchValue, ...propriedades }) {
-  // console.log("Dentro do componente", propriedades.playlists);
+  
   const playlistNames = Object.keys(propriedades.playlists);
   // Statement
   // Retorno por expressão
